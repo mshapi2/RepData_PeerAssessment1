@@ -4,15 +4,7 @@ Reproducible Research: Peer Assessment 1
 
 
 ```r
-dirProject <- "/Coursera/JohnsHopkins-Data-Science/5. Reproducible research/RepData_PeerAssessment1"
-setwd(paste(setwd("~/"), dirProject, sep = "", collapse = NULL))
-```
 
-```
-## Error: cannot change working directory
-```
-
-```r
 ## Download .zip file
 fileURL <- "http://d396qusza40orc.cloudfront.net/repdata%2Fdata%2Factivity.zip"
 download.file(fileURL, dest = "activity.zip")
@@ -43,7 +35,7 @@ hist(steps$Nsteps, main = "Histogram of the number of steps each day", xlab = "N
 abline(v = median(steps$Nsteps, na.rm = TRUE), col = "green", lwd = 3)
 ```
 
-![plot of chunk unnamed-chunk-2](figure/unnamed-chunk-2.png) 
+![plot of chunk histogram_Nsteps](figure/histogram_Nsteps.png) 
 
 ```r
 meanSteps <- mean(steps$Nsteps, na.rm = TRUE)
@@ -55,6 +47,8 @@ medianSteps <- median(steps$Nsteps, na.rm = TRUE)
 
 ## Average daily activity pattern
 
+Create data frame *stepsInterval* with averaged number of steps for each interval.  
+
 
 ```r
 intervals <- list(as.factor(activity$interval))
@@ -65,13 +59,71 @@ plot(x, stepsInterval$Nsteps, type = "l", lwd = 2, main = "Average number of ste
     xlab = "Interval", ylab = "Number of steps", col = "blue")
 ```
 
-![plot of chunk unnamed-chunk-3](figure/unnamed-chunk-3.png) 
+![plot of chunk daily_activity](figure/daily_activity.png) 
 
 ```r
 maxInterval <- x[which.max(stepsInterval$Nsteps)]
 ```
 
 
-The maximum number of steps, on average across all the days in the dataset, contains 5-minute interval number 104.  
+The maximum number of steps, on average across all the days in the dataset, contains 5-minute interval number 104.
+
+## Imputing missing variables
+
+1. Make a logical vector indexNA of NAs
+2. Copy *activity* frame to *activityImp*
+3. Replace NAs in *activityImp* with the average number of steps for each interval from *stepsInterval*.
+
+
+```r
+indexNA <- is.na(activity)
+missingN <- sum(indexNA)
+activityImp <- activity
+for (i in 1:length(activityImp$steps)) {
+    if (indexNA[i]) 
+        activityImp$steps[i] = stepsInterval$Nsteps[stepsInterval$Interval == 
+            activityImp$interval[i]]
+}
+```
+
+A histogram of the total number of steps taken each day.
+
+```r
+
+stepsImp <- aggregate(activityImp$steps, by = list(as.factor(activityImp$date)), 
+    FUN = sum)
+colnames(stepsImp) <- c("day", "Nsteps")
+hist(stepsImp$Nsteps, main = "Histogram of the number of steps each day \n with imputed data", 
+    xlab = "Number of steps", col = "blue")
+abline(v = median(stepsImp$Nsteps, na.rm = TRUE), col = "green", lwd = 3)
+```
+
+![plot of chunk histogram_Nsteps_Imputed](figure/histogram_Nsteps_Imputed.png) 
+
+```r
+meanStepsImp <- mean(stepsImp$Nsteps)
+medianStepsImp <- median(stepsImp$Nsteps)
+```
+
+**Mean Imputed** total number of steps per day 10766.2.  
+Same as **Mean** 10766.2.  
+**Median Imputed** total number of steps per day 10766.2.  
+Compare with **Median** 10765.
+
+## Activity patterns on weekdays and weekends.
+
+Create a new factor column in *activityImp* with "day" levels.  
+Rename the days as "weekday" and "weekend".
+
+```r
+activityImp$day <- as.factor(weekdays(as.Date(activityImp$date)))
+activityImp$day <- sub("Monday|Tuesday|Wednesday|Thursday|Friday", "weekday", 
+    activityImp$day)
+activityImp$day <- sub("Saturday|Sunday", "weekend", activityImp$day)
+```
+
+
+
+
 
 
