@@ -4,7 +4,6 @@ Reproducible Research: Peer Assessment 1
 
 
 ```r
-
 ## Download .zip file
 fileURL <- "http://d396qusza40orc.cloudfront.net/repdata%2Fdata%2Factivity.zip"
 download.file(fileURL, dest = "activity.zip")
@@ -70,12 +69,12 @@ The maximum number of steps, on average across all the days in the dataset, cont
 
 ## Imputing missing variables
 
-1. Make a logical vector indexNA of NAs
-2. Copy *activity* frame to *activityImp*
-3. Replace NAs in *activityImp* with the average number of steps for each interval from *stepsInterval*.
+1. Copy *activity* frame to *activityImp*
+2. Replace NAs in *activityImp* with the average number of steps for each interval from *stepsInterval*.
 
 
 ```r
+# Make a logical vector *indexNA* of NAs
 indexNA <- is.na(activity)
 missingN <- sum(indexNA)
 activityImp <- activity
@@ -86,7 +85,8 @@ for (i in 1:length(activityImp$steps)) {
 }
 ```
 
-A histogram of the total number of steps taken each day.
+Total of 2304 values were missing.
+A histogram of the total number of steps taken each day with imputed data.
 
 ```r
 
@@ -122,8 +122,35 @@ activityImp$day <- sub("Monday|Tuesday|Wednesday|Thursday|Friday", "weekday",
 activityImp$day <- sub("Saturday|Sunday", "weekend", activityImp$day)
 ```
 
+Create dataframe *stepsDay* with averaged number of steps for each interval for the weekdays and weekends.  
 
 
+```r
+## Create dataframe stepsWeekday
+intervalsWeekday <- list(as.factor(activityImp$interval[activityImp$day == "weekday"]))
+stepsWeekday <- with(activityImp, aggregate(steps[day == "weekday"], by = intervalsWeekday, 
+    FUN = mean))
+stepsWeekday$day <- factor("weekday")
+intervalsWeekend <- list(as.factor(activityImp$interval[activityImp$day == "weekend"]))
 
+## Create dataframe stepsWeekend
+stepsWeekend <- with(activityImp, aggregate(steps[day == "weekend"], by = intervalsWeekend, 
+    FUN = mean))
+stepsWeekend$day <- factor("weekend")
+
+## Combine the two sets
+stepsDay <- rbind(stepsWeekday, stepsWeekend)
+colnames(stepsDay) <- c("Interval", "Nsteps", "day")
+```
+
+Activity on the weekdays and weekends
+
+```r
+library(lattice)
+x <- as.numeric(stepsDay$Interval)
+with(stepsDay, xyplot(Nsteps ~ Interval | day, layout = c(1, 2), type = "l"))
+```
+
+![plot of chunk activity_plot](figure/activity_plot.png) 
 
 
